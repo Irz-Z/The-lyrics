@@ -1,0 +1,147 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:TheLyrics.App.ViewModels"
+        xmlns:controls="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
+        xmlns:styles="clr-namespace:Material.Styles;assembly=Material.Styles"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
+        x:Class="TheLyrics.App.Views.PreferencesDialog"
+        Icon="/Assets/open-utau.ico"
+        Title="{DynamicResource prefs.caption}"
+        WindowStartupLocation="CenterScreen"
+        Width="800" Height="400">
+  <Window.Resources>
+    <vm:CultureNameConverter x:Key="cultureNameConverter"/>
+  </Window.Resources>
+  <Window.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="TextBlock.restart">
+      <Setter Property="Text" Value="{DynamicResource prefs.note.restart}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Margin" Value="4,0"/>
+    </Style>
+    <Style Selector="ToggleSwitch">
+      <Setter Property="OnContent" Value="{DynamicResource prefs.on}"/>
+      <Setter Property="OffContent" Value="{DynamicResource prefs.off}"/>
+      <Setter Property="HorizontalAlignment" Value="Right"/>
+    </Style>
+  </Window.Styles>
+  <Design.DataContext>
+  </Design.DataContext>
+  <Grid Margin="{Binding $parent.WindowDecorationMargin}" ColumnDefinitions="200,*">
+    <ListBox Classes="NoScroll" Name="DrawerList"
+              Focusable="{Binding ElementName=LeftDrawer, Path=LeftDrawerOpened}">
+      <ListBox.Styles>
+        <Style Selector="ListBoxItem">
+          <Setter Property="Height" Value="48" />
+          <Setter Property="Padding" Value="16,0" />
+          <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+      </ListBox.Styles>
+      <ListBoxItem Content="{DynamicResource prefs.playback}"/>
+      <ListBoxItem Content="{DynamicResource prefs.rendering}"/>
+      <ListBoxItem Content="{DynamicResource prefs.appearance}"/>
+    </ListBox>
+    <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible">
+      <Carousel Name="PageCarousel" Margin="10" HorizontalAlignment="Stretch" 
+          SelectedIndex="{Binding ElementName=DrawerList, Path=SelectedIndex}">
+        <!-- Playback -->
+        <StackPanel>
+          <TextBlock Text="{DynamicResource prefs.playback.device}"/>
+          <ComboBox ItemsSource="{Binding AudioOutputDevices}" SelectedItem="{Binding AudioOutputDevice}"/>
+          <Button Content="{DynamicResource prefs.playback.test}" HorizontalAlignment="Stretch" Command="{Binding TestAudioOutputDevice}"/>
+          <TextBlock Text="{DynamicResource prefs.playback.backend}" Margin="0,10,0,0"/>
+          <ComboBox SelectedIndex="{Binding PreferPortAudio}">
+            <ComboBoxItem Content="{DynamicResource prefs.playback.backend.auto}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.playback.backend.mini}"/>
+          </ComboBox>
+          <TextBlock Classes="restart"/>
+          <TextBlock Text="{DynamicResource prefs.playback.lockstarttime}" Margin="0,10,0,0"/>
+          <ComboBox SelectedIndex="{Binding LockStartTime}">
+            <ComboBoxItem Content="{DynamicResource prefs.playback.lockstarttime.off}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.playback.lockstarttime.on}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.playback.lockstarttime.onlycursor}"/>
+          </ComboBox>
+          <TextBlock Text="{DynamicResource prefs.playback.autoscroll}" Margin="0,10,0,0"/>
+          <ComboBox  SelectedIndex="{Binding PlaybackAutoScroll}">
+            <ComboBoxItem Content="{DynamicResource prefs.off}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.playback.autoscrollmode.stationarycursor}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.playback.autoscrollmode.pagescroll}"/>
+          </ComboBox>
+          <Grid ColumnDefinitions="Auto,8,20,8,*" Margin="0,10,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.playback.cursorposition}"/>
+            <TextBlock Grid.Column="2">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="{}{0:#0.0}">
+                  <Binding Path="PlayPosMarkerMargin"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding PlayPosMarkerMargin}" Minimum="0" Maximum="1"
+                    TickPlacement="BottomRight" TickFrequency="0.1" IsSnapToTickEnabled="true"/>
+          </Grid>
+        </StackPanel>
+
+        <!-- Rendering -->
+        <StackPanel>
+          <Grid>
+            <TextBlock Text="{DynamicResource prefs.rendering.prerender}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding PreRender}"/>
+          </Grid>
+          <Grid ColumnDefinitions="Auto,8,16,8,*">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.rendering.threads.numthreads}"/>
+            <TextBlock Grid.Column="2">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="{}{0:#0}">
+                  <Binding Path="NumRenderThreads"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding NumRenderThreads}" Minimum="1" Maximum="{Binding LogicalCoreCount, Mode=OneTime}"
+                    TickPlacement="BottomRight" TickFrequency="1" IsSnapToTickEnabled="true"/>
+          </Grid>
+          <TextBlock TextWrapping="Wrap" Text="{DynamicResource prefs.rendering.threads.cpuwarn}" FontWeight="Bold"
+                      Foreground="Red" Margin="0,0,0,4" IsVisible="{Binding HighThreads}" FontSize="11"/>
+          <TextBlock Classes="restart"/>
+          <Grid>
+            <TextBlock Text="{DynamicResource prefs.rendering.skipmuted}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding SkipRenderingMutedTracks}"/>
+          </Grid>
+          <Grid>
+            <TextBlock Text="{DynamicResource prefs.cache.clearonquit}" HorizontalAlignment="Left" />
+            <ToggleSwitch IsChecked="{Binding ClearCacheOnQuit}" />
+          </Grid>
+          <TextBlock Text="{DynamicResource prefs.rendering.onnxrunner}" Margin="0,10,0,0"/>
+          <ComboBox ItemsSource="{Binding OnnxRunnerOptions}" SelectedItem="{Binding OnnxRunner}"/>
+          <TextBlock Text="{DynamicResource prefs.rendering.onnxgpu}" Margin="0,10,0,0"/>
+          <ComboBox ItemsSource="{Binding OnnxGpuOptions}" SelectedItem="{Binding OnnxGpu}"/>
+          <TextBlock Classes="restart"/>
+        </StackPanel>
+
+        <!-- Appearance -->
+        <StackPanel>
+          <TextBlock Text="{DynamicResource prefs.appearance.lang}" Margin="0,10,0,0"/>
+          <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Converter={StaticResource cultureNameConverter}}"/>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBlock Text="{DynamicResource prefs.appearance.theme}" Margin="0,10,0,0"/>
+          <ComboBox SelectedIndex="{Binding Theme}">
+            <ComboBoxItem Content="{DynamicResource prefs.appearance.theme.light}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.appearance.theme.dark}"/>
+          </ComboBox>
+        </StackPanel>
+      </Carousel>
+    </ScrollViewer>
+  </Grid>
+</Window>
